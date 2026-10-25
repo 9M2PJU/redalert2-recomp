@@ -99,7 +99,7 @@ typedef struct { uint32_t biSize; int32_t biWidth, biHeight; uint16_t biPlanes, 
 #define VOX_SHADOW 0x00AE0DB8u
 #endif
 
-int ra2_vox_hd_on, ra2_vox_hd_show = 1;
+int ra2_vox_hd_on, ra2_vox_hd_show = 1, ra2_vox_aa;
 #define HD_LIVE (ra2_vox_hd_on && ra2_vox_hd_show)
 int16_t ra2_vox_dx, ra2_vox_dy;          /* read by the rasterizer patch, 8.8 */
 
@@ -130,6 +130,7 @@ void ra2_vox_set_scale(int n);            /* defined at the end; resets what was
 void hdvox_configure(int on, const char* dump_dir) {
     const char* s = getenv("RA2_HD_SCALE");
     if (s) ra2_vox_set_scale(atoi(s));    /* a dev override; the setting path calls set_scale too */
+    if (getenv("RA2_HD_AA")) ra2_vox_aa = 1;   /* dev override for the 1x-smooth overlay */
     ra2_vox_hd_on = on || dump_dir;
     g_dump = dump_dir;
     if (dump_dir) CreateDirectoryA(dump_dir, NULL);
@@ -864,7 +865,9 @@ int hdvox_overlay(const uint8_t* frame16, int pitch, int w, int h, uint32_t* ov,
                   int* odx, int* ody, int* odw, int* odh) {
     *odx = *ody = *odw = *odh = 0;
     if (!HD_LIVE || !g_pub_lock_init || !g_arena[0]) return 0;
-    int N = g_scale, NN = N * N, W = N * w;
+    int N = g_scale, NN = N * N;
+    int D = ra2_vox_aa ? 1 : N;       /* display scale: 1x averaged (AA) or Nx subpixels */
+    int W = D * w;                    /* the ov buffer's row stride, in pixels */
     bgrx_ready();
     EnterCriticalSection(&g_pub_lock);
     /* this call's 1x bounding box over both record sets, clipped to the frame */
@@ -899,9 +902,9 @@ int hdvox_overlay(const uint8_t* frame16, int pitch, int w, int h, uint32_t* ov,
     if (cx1 > w) cx1 = w;                              /* a shrunk resolution: clamp */
     if (cy1 > h) cy1 = h;
     g_ov_bx0 = bx0, g_ov_by0 = by0, g_ov_bx1 = bx1, g_ov_by1 = by1;
-    if (cx1 <= cx0 || cy1 <= cy0) { LeaveCriticalSection(&g_pub_lock); return N; }  /* empty */
-    for (int y = N * cy0; y < N * cy1; y++)
-        memset(ov + (size_t)y * W + N * cx0, 0, (size_t)(cx1 - cx0) * N * 4);
+    if (cx1 <= cx0 || cy1 <= cy0) { LeaveCriticalSection(&g_pub_lock); return D; }  /* empty */
+    for (int y = D * cy0; y < D * cy1; y++)
+        memset(ov + (size_t)y * W + D * cx0, 0, (size_t)(cx1 - cx0) * D * 4);
     /* the units' Nx pixels, older set first (pub over prev), where the frame
      * still shows what the record expects */
     for (int set = 0; set < 2; set++) {
@@ -917,20 +920,28 @@ int hdvox_overlay(const uint8_t* frame16, int pitch, int w, int h, uint32_t* ov,
                 int y = r->y + j;
                 if (y < 0 || y >= h) continue;
                 const uint16_t* row = (const uint16_t*)(frame16 + y * pitch);
-                uint32_t* base = ov + (size_t)(N * y) * W;
+                uint32_t* base = ov + (size_t)(D * y) * W;
                 for (int i = 0; i < rw; i++) {
                     int x = r->x + i, k = j * rw + i;
                     if (x < 0 || x >= w || !m[k] || row[x] != E[k]) continue;
-                    for (int q = 0; q < NN; q++)
-                        base[(size_t)(q / N) * W + N * x + q % N] = 0xFF000000u | bgrx(O[k * NN + q]);
+                    if (D == 1) {                 /* average the N*N subpixels -> one AA'd pixel */
+                        uint32_t rs = 0, gs = 0, bs = 0;
+                        for (int q = 0; q < NN; q++) {
+                            uint32_t c = bgrx(O[k * NN + q]);
+                            rs += (c >> 16) & 0xFF; gs += (c >> 8) & 0xFF; bs += c & 0xFF;
+                        }
+                        base[x] = 0xFF000000u | (rs / NN << 16) | (gs / NN << 8) | (bs / NN);
+                    } else
+                        for (int q = 0; q < NN; q++)
+                            base[(size_t)(q / N) * W + N * x + q % N] = 0xFF000000u | bgrx(O[k * NN + q]);
                 }
             }
             at += (sizeof(rec_t) + (size_t)rw * rh * (3 + 2 * NN) + 7) & ~(size_t)7;
         }
     }
     LeaveCriticalSection(&g_pub_lock);
-    *odx = N * cx0, *ody = N * cy0, *odw = N * (cx1 - cx0), *odh = N * (cy1 - cy0);
-    return N;
+    *odx = D * cx0, *ody = D * cy0, *odw = D * (cx1 - cx0), *odh = D * (cy1 - cy0);
+    return D;
 }
 
 /* Set the HD render scale (2 or 3). Records, stamps and the memo are all

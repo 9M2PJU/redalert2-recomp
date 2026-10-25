@@ -54,7 +54,10 @@ A `--scale` or `--fullscreen` on the command line wins over the file.
 - **HD vehicles** (on unless turned off) draws voxel units at twice the
   resolution of the rest of the picture ([voxels.md](voxels.md)); the
   presenter's picture is then the game's at 2x, up to a game resolution of
-  2048x1080.
+  2048x1080. *On, 3x* is sharper and slower. *On, 1x smooth* instead renders
+  the units at 2x and averages each 2x2 block back down, antialiasing them at
+  the game's own size (`hdvox_aa=1` in `ra2.ini`) -- it costs the same as 2x
+  but keeps units vanilla-sized.
 - **Game resolution** applies to the next game (skirmish or mission); the
   menus are always 800x600. It is written to the game's `RA2MD.INI`
   `[Video] ScreenWidth/ScreenHeight`, and to the game's options in memory

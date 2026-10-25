@@ -28,8 +28,9 @@ reimplements the rules: this runs Westwood's own code, recompiled.
   resolution and mods, without editing an INI.
 - **High resolution and widescreen**: 1280x720 up to 3840x2160, more of the
   battlefield on screen ([hires.md](docs/hires.md)).
-- **HD vehicles**: units, their shadows and aircraft drawn at twice the
-  resolution from the game's own voxel models, at no cost in frame time
+- **HD vehicles**: units, their shadows and aircraft drawn at twice (or three
+  times) the resolution from the game's own voxel models, at no cost in frame
+  time; or *1x smooth*, antialiasing the units at the game's own size
   ([voxels.md](docs/voxels.md)).
 - **Modern controls** (F10): left-click to select, right-click to order, and
   Shift-click a build icon to queue five ([modern-controls.md](docs/modern-controls.md)).

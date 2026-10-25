@@ -28,7 +28,7 @@ enum { ID_SCALE = 100, ID_BARS = 200, ID_FULL = 300, ID_RES = 400, ID_DISPLAY = 
 
 static const char *const k_scale[] = { "sharp", "smooth", "crt", "nearest", "integer" };
 static const char *const k_scale_label[] = { "Sharp (default)", "Smooth", "CRT", "Nearest", "Integer" };
-static hle_menu_item_t g_main[8], g_scale[5], g_bars[2], g_hd[3], g_res[NRES + 1], g_mods[MAX_MENU_MODS + 1];
+static hle_menu_item_t g_main[8], g_scale[5], g_bars[2], g_hd[4], g_res[NRES + 1], g_mods[MAX_MENU_MODS + 1];
 static char g_res_label[NRES + 1][40], g_mod_names[MAX_MENU_MODS][128];
 static int g_nmods, g_display_w, g_display_h;
 static void (*g_save)(void);
@@ -103,9 +103,10 @@ static void chosen(int id) {
     if (id >= ID_SCALE && id < ID_SCALE + 5) hle_screen_scale(k_scale[id - ID_SCALE]);
     else if (id == ID_BARS || id == ID_BARS + 1) hle_screen_bars(id - ID_BARS);
     else if (id == ID_FULL) { int full; hle_screen_settings(NULL, &full); hle_screen_fullscreen(!full); return; }   /* saves, as F11 */
-    else if (id >= ID_HDVOX && id <= ID_HDVOX + 2) {              /* Off / 2x / 3x, next frame */
+    else if (id >= ID_HDVOX && id <= ID_HDVOX + 3) {              /* Off / 2x / 3x / 1x smooth, next frame */
         if (id == ID_HDVOX) ra2_vox_hd_show = 0;
-        else { ra2_vox_set_scale(id == ID_HDVOX + 2 ? 3 : 2); ra2_vox_hd_show = 1; }
+        else if (id == ID_HDVOX + 3) { ra2_vox_set_scale(2); ra2_vox_aa = 1; ra2_vox_hd_show = 1; }
+        else { ra2_vox_set_scale(id == ID_HDVOX + 2 ? 3 : 2); ra2_vox_aa = 0; ra2_vox_hd_show = 1; }
     }
     else if (id >= ID_RES && id < ID_RES + NRES) { set_game_resolution(k_res[id - ID_RES][0], k_res[id - ID_RES][1]); return; }
     else if (id == ID_DISPLAY) { set_game_resolution(g_display_w, g_display_h); return; }
@@ -121,8 +122,9 @@ static void open_menu(void) {
     g_bars[1] = (hle_menu_item_t){ "Black", NULL, ID_BARS, !bars, NULL, 0 };
     int sc = ra2_vox_scale();
     g_hd[0] = (hle_menu_item_t){ "Off", NULL, ID_HDVOX, !ra2_vox_hd_show, NULL, 0 };
-    g_hd[1] = (hle_menu_item_t){ "On, 2x", NULL, ID_HDVOX + 1, ra2_vox_hd_show && sc == 2, NULL, 0 };
-    g_hd[2] = (hle_menu_item_t){ "On, 3x (sharper, slower)", NULL, ID_HDVOX + 2, ra2_vox_hd_show && sc == 3, NULL, 0 };
+    g_hd[1] = (hle_menu_item_t){ "On, 2x", NULL, ID_HDVOX + 1, ra2_vox_hd_show && !ra2_vox_aa && sc == 2, NULL, 0 };
+    g_hd[2] = (hle_menu_item_t){ "On, 3x (sharper, slower)", NULL, ID_HDVOX + 2, ra2_vox_hd_show && !ra2_vox_aa && sc == 3, NULL, 0 };
+    g_hd[3] = (hle_menu_item_t){ "On, 1x smooth (antialiased)", NULL, ID_HDVOX + 3, ra2_vox_hd_show && ra2_vox_aa, NULL, 0 };
     int w = (int)MEM32(RA2_OPT_W_VA), h = (int)MEM32(RA2_OPT_H_VA), nr = 0, dw = 0, dh = 0;
     /* this display's own size first, when it isn't one of the list's (a
      * MacBook's 1512 x 982); no larger than 4K, the largest tested */
@@ -148,7 +150,7 @@ static void open_menu(void) {
     g_main[n++] = (hle_menu_item_t){ "Scaling", "F12", 0, 0, g_scale, 5 };
     g_main[n++] = (hle_menu_item_t){ "Bars beside the picture", NULL, 0, 0, g_bars, 2 };
     g_main[n++] = (hle_menu_item_t){ "Fullscreen", "F11", ID_FULL, full, NULL, 0 };
-    g_main[n++] = (hle_menu_item_t){ "HD vehicles (voxels)", NULL, 0, 0, g_hd, 3 };
+    g_main[n++] = (hle_menu_item_t){ "HD vehicles (voxels)", NULL, 0, 0, g_hd, 4 };
     g_main[n++] = (hle_menu_item_t){ NULL, NULL, 0, 0, NULL, 0 };
     g_main[n++] = (hle_menu_item_t){ "Game resolution (next game)", NULL, 0, 0, g_res, nr };
     g_main[n++] = (hle_menu_item_t){ "Mod (restarts the game)", NULL, 0, 0, g_mods, nm };

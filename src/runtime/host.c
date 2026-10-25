@@ -795,12 +795,12 @@ int host_frame_overlay(uint32_t* base, uint32_t* ov, int maxw, int maxh, int* pw
                 row[x] = (r << 3 | r >> 2) << 16 | (g << 2 | g >> 4) << 8 | (b << 3 | b >> 2);
             }
         }
-        hdvox_overlay(g_snap, pitch, w, h, ov, dx, dy, dw, dh);
+        N = hdvox_overlay(g_snap, pitch, w, h, ov, dx, dy, dw, dh);   /* display scale: Nx, or 1 if AA */
     }
     LeaveCriticalSection(&g_snap_lock);
     *pw = w;
     *ph = h;
-    return ok ? N : 0;                         /* the scale, for the presenter's Nx texture */
+    return ok ? N : 0;                         /* the scale, for the presenter's overlay texture */
 }
 
 /* Headless with HD voxels: the presenter's 2x pictures, made at its pace (a

@@ -18,6 +18,12 @@ void ra2_vox_set_scale(int n);
  * facing the camera (issue #8). */
 extern int ra2_vox_hd_on, ra2_vox_hd_show;
 
+/* Antialias instead of zoom: still render the units at the Nx scale, but
+ * average each 1x cell's N*N subpixels down to one pixel (supersampled AA) and
+ * draw the overlay at 1x -- units stay vanilla-sized, just smoother. Only the
+ * sparse overlay path honours it; hdvox_compose ignores it (draws Nx). */
+extern int ra2_vox_aa;
+
 /* The presenter's frame at Nx (N = ra2_vox_scale()): frame16 the 1x frame
  * (16-bit, pitch in bytes), out Nw x Nh BGRX, with the units' Nx pixels where
  * they still show. */
