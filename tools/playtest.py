@@ -258,7 +258,10 @@ if NATIVE:
             .uclick(*combo_point(OPTIONS, 1773, item=3, at=at), after=2))
     video = {'Video': {'ScreenWidth': 800, 'ScreenHeight': 600, 'AllowHiResModes': 'yes'}}
     if TARGET == 'game':
-        case('options-resolution', pick.uclick(547, 400, after=2).press(0xD9, 'Ok').press(OPTIONS, 'MainMenu', MAIN),
+        # A wait before Main Menu, so the sheet shows the Options screen
+        # redrawn once the box goes (it stayed blank: pcrecomp's uncover).
+        case('options-resolution', pick.uclick(547, 400, after=2).press(0xD9, 'Ok').move(600, 450, after=5)
+             .press(OPTIONS, 'MainMenu', MAIN),
              90, dialogs=[OPTIONS, 0xD9, MAIN], size=(1152, 864), ini=video)
     else:
         case('options-resolution', pick.press(OPTIONS, 'MainMenu', MAIN), 90, dialogs=[OPTIONS], ini=video)

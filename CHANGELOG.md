@@ -5,6 +5,14 @@ versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- Linux and macOS: after a resolution change in Red Alert 2's Options
+  screen, the menu came back blank (the backdrop and empty buttons) until
+  you moved to another screen. Closing the box that keeps the new mode now
+  repaints the Options screen under it, as on Windows. The fix is
+  pcrecomp's; setup offers to update an older clone (#24, reported by
+  @dkvdm and @curryking3).
+
 ## [0.1.1] - 2026-10-24
 
 ### Added
