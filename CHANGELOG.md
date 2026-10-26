@@ -5,7 +5,18 @@ versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-26
+
+### Added
+- HD vehicles: a **1x smooth** option. Units are rendered at 2x and averaged
+  back down to the game's own size, so they stay vanilla-sized but lose the
+  voxel stair-steps. Off by default: the fourth item in the F10 HD vehicles
+  menu, or `hdvox_aa=1` in `ra2.ini`.
+
 ### Fixed
+- macOS: building on an external drive failed on the `._*`
+  metadata files macOS leaves next to each source file. The build and the
+  name lift now skip them (#31, with sp00nznet/pcrecomp#133).
 - Native build: with HD vehicles at 3x (`hdvoxels=3` in `ra2.ini`) the game
   crashed at startup, before HD was live: the presenter's fallback compose
   buffer is 2x-sized, and a 3x compose wrote past it. The fallback now runs
