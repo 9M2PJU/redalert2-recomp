@@ -70,7 +70,12 @@ void ra2_hook_debuglog(void) {
 #include "hdvox.h"
 #include "mods.h"
 static int compose_hd(const uint8_t *px16, int pitch, int w, int h, uint32_t *out) {
-    if (!ra2_vox_hd_on || !ra2_vox_hd_show) return 0;
+    /* The presenter's fallback (a frame the overlay has nothing for, before HD
+     * is live) is its old full 2x compose: its buffer and texture are 2w x 2h.
+     * At 3x the compose would write past them (a crash at startup with
+     * hdvoxels=3 in ra2.ini), so it stays out and the presenter scales the 1x
+     * picture on the GPU, which shows the same: no unit is at HD yet. */
+    if (!ra2_vox_hd_on || !ra2_vox_hd_show || ra2_vox_scale() != 2) return 0;
     hdvox_compose(px16, pitch, w, h, out);
     return 1;
 }
@@ -314,8 +319,10 @@ static void frame_pump(void) {
     static uint32_t *probe_px;
     if (probe < 0) probe = g_headless && ra2_vox_hd_on;
     if (probe && now - probed >= 15 && hle_dd_frame(&px, &w, &h, &pitch, &bpp, &pal, NULL) && bpp == 16) {
+        int n = ra2_vox_scale();
         if (!probe_px) probe_px = malloc((size_t)4096 * 2160 * 4);
-        if (probe_px && w <= 2048 && h <= 1080) compose_hd(px, pitch, w, h, probe_px);
+        if (probe_px && ra2_vox_hd_show && (size_t)w * n * h * n <= (size_t)4096 * 2160)   /* the Nx frame fits */
+            hdvox_compose(px, pitch, w, h, probe_px);
         probed = now;
     }
     if ((int32_t)(now - next) < 0 || !hle_dd_frame(&px, &w, &h, &pitch, &bpp, &pal, NULL)) return;

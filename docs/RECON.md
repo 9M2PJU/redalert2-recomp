@@ -52,6 +52,11 @@ The **launcher check is already gone** in this build. `0x0049F5C0` ("Checking
 if launcher is running") and `0x0049F620` ("Notify launcher") are both
 `mov al, 1; ret`, with the original bodies left behind them as dead code. So
 `gamemd.exe` runs without `RA2MD.exe`, and the host needs no launcher mutex.
+A retail `gamemd.exe` of the same build (same PE timestamp, same addresses)
+keeps both bodies and bails without the launcher's mutex ("Launcher not
+running....Bail!"), so the lift stubs both to `mov al, 1; ret` anyway
+(`run_lift.py`, `LAUNCHER_SITES`; `0x004918F0` and `0x00491930` in
+`game.exe`).
 
 Imports: `KERNEL32` 162, `USER32` 96, `GDI32` 22, `WSOCK32` 19, `ole32` 15,
 `binkw32` 13, `OLEAUT32` 11, `ADVAPI32` 9, `COMCTL32` 7, `IMM32` 6, `WINMM` 5,

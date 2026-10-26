@@ -442,6 +442,27 @@ def clip_line_patches(target):
             accept: reset, reject: reset}
 
 
+# The launcher check. gamemd.exe starts by looking for RA2MD.exe (0x0049F5C0,
+# "COPYPROTECTION - Checking if launcher is running": a named mutex the launcher
+# holds) and later signals it (0x0049F620, "Notify launcher": an event, a window
+# message and a shared mapping), and exits without it ("Launcher not
+# running....Bail!"). The Steam and EA App release has both as `mov al, 1; ret`
+# (docs/RECON.md); a retail exe of the same build (the same PE timestamp, so the
+# same addresses) keeps the bodies, and there is no launcher here to answer.
+# game.exe has the pair at 0x004918F0 and 0x00491930. Both return 1 here, as
+# the Steam build's do.
+LAUNCHER_SITES = {   # the check, the notify
+    'gamemd': (0x0049F5C0, 0x0049F620),
+    'game': (0x004918F0, 0x00491930),
+}
+
+
+def launcher_patches(target):
+    return {va: '@replace:SET_LO8(eax, 1); RECOMP_FLAGS_OUT(); esp += 4; { RECOMP_REGS_OUT(); return; } '
+                '/* launcher check 0x%08X -> mov al, 1; ret, as the Steam build (run_lift.py LAUNCHER_SITES) */' % va
+            for va in LAUNCHER_SITES[target]}
+
+
 def apply_patches(body, patches):
     """Add each patch's C after the line that lifts its instruction."""
     for va, c in patches.items():
@@ -477,7 +498,7 @@ def targets():
                        title="Yuri's Revenge", game_frame=0x00A8ED84, stamp=0x3BDF544E,
                        patches=lambda code, cs: {**sidebar_rows_patches(code, cs), **HD_VOXEL_PATCHES,
                                                  **modern_controls_patches('gamemd'), **queue_five_patches('gamemd'),
-                                                 **clip_line_patches('gamemd')}),
+                                                 **clip_line_patches('gamemd'), **launcher_patches('gamemd')}),
         'game': dict(exe=os.path.join(_HERE, 'game', 'game.exe'),
                      catalog=os.path.join(_HERE, 'work', 'game', 'functions.json'),
                      seeds=os.path.join(_HERE, 'work', 'game', 'rtti_seeds.json'),
@@ -492,7 +513,7 @@ def targets():
                                                                      (0x0083962C, 0x00ABCD64)),
                                                **HD_VOXEL_PATCHES_GAME,
                                                **modern_controls_patches('game'), **queue_five_patches('game'),
-                                               **clip_line_patches('game')}),
+                                               **clip_line_patches('game'), **launcher_patches('game')}),
     }
 
 

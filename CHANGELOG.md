@@ -6,6 +6,17 @@ versions follow [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Fixed
+- Native build: with HD vehicles at 3x (`hdvoxels=3` in `ra2.ini`) the game
+  crashed at startup, before HD was live: the presenter's fallback compose
+  buffer is 2x-sized, and a 3x compose wrote past it. The fallback now runs
+  only at 2x; at 3x the 1x frame is scaled on the GPU until the overlay has
+  units to show, which looks the same. The headless probe sizes its frame by
+  the scale too.
+- A retail `gamemd.exe` or `game.exe` (the same build as Steam's, with its
+  launcher check intact) exited at once with "Launcher not running....Bail!"
+  (it looks for `RA2MD.exe`'s mutex). The lift now stubs the launcher check
+  and the launcher notify to return success, as the Steam build's own code
+  does (`run_lift.py`, `LAUNCHER_SITES`).
 - Linux and macOS: after a resolution change in Red Alert 2's Options
   screen, the menu came back blank (the backdrop and empty buttons) until
   you moved to another screen. Closing the box that keeps the new mode now

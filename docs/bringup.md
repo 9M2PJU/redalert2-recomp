@@ -53,6 +53,8 @@ step is needed.
 
 Not needed: the launcher check. The Steam build already returns true from
 `0x0049F5C0` (`mov al, 1; ret`), so `gamemd.exe` runs without `RA2MD.exe`.
+(A retail exe of the same build keeps the check; the lift stubs it the same
+way, `run_lift.py` `LAUNCHER_SITES`.)
 
 ## 3. Surfaces with a format need a type
 
