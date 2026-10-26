@@ -45,3 +45,12 @@ it play there:
   menu band cut that sliced Red Alert 2's main menus at widescreen sizes.
 - **The presenter's timer** (#22): measured `GetTickCount`'s 15-16 ms steps
   holding menus to 21 pictures a second, not 30.
+
+### [@hauxir](https://github.com/hauxir)
+**Brought up a retail (non-Steam) copy on an Apple Silicon Mac:**
+
+- **The launcher check** (#32): found that a retail exe of the Steam build
+  still bails with "Launcher not running", and stubbed the check and the
+  notify in the lift for both games.
+- **The 3x HD startup crash** (#32): traced it with lldb to the presenter's
+  2x-sized fallback buffer and kept the fallback to 2x.
