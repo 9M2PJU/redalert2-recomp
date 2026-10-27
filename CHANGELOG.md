@@ -5,6 +5,8 @@ versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-26
+
 ### Fixed
 - Windows: `ra2.exe` could refuse to start with "The subsystem needed to
   support the image type is not present" (#30). Its frame buffers were
