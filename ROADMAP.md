@@ -33,7 +33,12 @@ In order; each is done when its check is in the suite or the docs.
    recorded) to compare frames against.
 4. **Multiplayer**: a LAN match played to an end, more than two players, and
    the same across a NAT; Windows against Linux.
-5. **Release**: v0.1.0.
+5. **Online through CnCNet** (#36), in steps: a LAN game over a VPN
+   (Tailscale, ZeroTier), documented; a recomp player against the original
+   exe, frame for frame, since lockstep needs both to run the same simulation
+   (`tools/conformance.py`); then CnCNet's spawner, starting the match from
+   the client's `spawn.ini` and sending traffic through its tunnels. Vanilla
+   games: Ares and Phobos patch the exe, which the lift can't follow.
 
 ## Tiberian Sun and Firestorm
 
@@ -69,8 +74,8 @@ not on patches to a binary:
 
 ## Deferred
 
-- Online play (Westwood Online / CnCNet): the servers are gone; LAN over IPXEmu
-  stays as shipped.
+- Westwood Online: its servers are gone. Online play goes through CnCNet
+  instead (Next, 5).
 
 ## Out of scope
 
