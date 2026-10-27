@@ -34,7 +34,7 @@ In order; each is done when its check is in the suite or the docs.
 4. **Multiplayer**: a LAN match played to an end, more than two players, and
    the same across a NAT; Windows against Linux.
 5. **Online through CnCNet** (#36), in steps: a LAN game over a VPN
-   (Tailscale, ZeroTier), documented; a recomp player against the original
+   that carries broadcasts (ZeroTier), documented; a recomp player against the original
    exe, frame for frame, since lockstep needs both to run the same simulation
    (`tools/conformance.py`); then CnCNet's spawner, starting the match from
    the client's `spawn.ini` and sending traffic through its tunnels. Vanilla
