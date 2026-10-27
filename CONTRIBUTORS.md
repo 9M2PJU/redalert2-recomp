@@ -54,3 +54,5 @@ it play there:
   notify in the lift for both games.
 - **The 3x HD startup crash** (#32): traced it with lldb to the presenter's
   2x-sized fallback buffer and kept the fallback to 2x.
+- **Quit that leaves** (#33): closing the window or Cmd+Q left the native
+  game running with no window; the host now exits if the game doesn't.
