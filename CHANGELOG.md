@@ -5,6 +5,12 @@ versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- Native build: closing the window, Cmd+Q or Quit in the Dock left the process
+  running with no window (the game closes its menu on WM_CLOSE and spins
+  without exiting), so the app stayed in the Dock until force-quit. The host
+  now gives the game 3 seconds to exit on its own, then exits the process (#33).
+
 ## [0.1.2] - 2026-10-26
 
 ### Added

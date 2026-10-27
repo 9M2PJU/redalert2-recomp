@@ -26,6 +26,7 @@
 #include <limits.h>
 #include <pthread.h>
 #include <sys/stat.h>
+#include <SDL2/SDL.h>
 
 #include "win32hle.h"
 #include "pe_loader.h"
@@ -289,6 +290,29 @@ static void *recorder(void *unused) {
     }
 }
 
+/* Quit from the window's close button, Cmd+Q or the Dock is SDL_QUIT, which
+ * the presenter turns into WM_CLOSE for the game. The game closes its menu on
+ * that and spins without pumping, and never exits, so the process stayed in
+ * the Dock. The game gets a moment to exit on its own; then the process goes. */
+#define QUIT_GRACE_S 3
+static void *quit_grace(void *arg) {
+    (void)arg;
+    sleep(QUIT_GRACE_S);
+    fprintf(stderr, "[host] quit: the game did not exit in %d s, leaving\n", QUIT_GRACE_S);
+    hle_exit(0);
+    return NULL;
+}
+static int quit_watch(void *ud, SDL_Event *e) {
+    static int once;
+    (void)ud;
+    if (e->type == SDL_QUIT && !once++) {
+        pthread_t t;
+        pthread_create(&t, NULL, quit_grace, NULL);
+        pthread_detach(t);
+    }
+    return 1;
+}
+
 /* The cursor, as on Windows (src/runtime/host.c, host_menu_cursor): the menus
  * are Win32 dialogs and use the Windows cursor the game sets; in a battle the
  * mouse is captured (WWMouseClass's +0x10 byte) and the game draws its own. */
@@ -306,6 +330,8 @@ static int menus_use_windows_cursor(void) {
 /* Without a recording, the same checksum lines at the same rate, from the
  * pump; and --dump-frames writes those frames as BMPs. */
 static void frame_pump(void) {
+    static int watching;
+    if (!watching && SDL_WasInit(SDL_INIT_EVENTS)) { SDL_AddEventWatch(quit_watch, NULL); watching = 1; }
     static uint32_t next;
     const uint8_t *px;
     const uint32_t *pal;
