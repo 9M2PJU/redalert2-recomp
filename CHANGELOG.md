@@ -6,6 +6,12 @@ versions follow [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Fixed
+- Windows: `ra2.exe` could refuse to start with "The subsystem needed to
+  support the image type is not present" (#30). Its frame buffers were
+  fixed arrays inside the exe, which took it up to 0x776ED000, over where
+  Windows maps the 32-bit ntdll.dll (a different spot each boot, so only some
+  PCs hit it). They are allocated at run time now, and the image ends near
+  0x68000000.
 - Native build: closing the window, Cmd+Q or Quit in the Dock left the process
   running with no window (the game closes its menu on WM_CLOSE and spins
   without exiting), so the app stayed in the Dock until force-quit. The host

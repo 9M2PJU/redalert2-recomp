@@ -802,9 +802,14 @@ static void frame_stats(LARGE_INTEGER t0, LARGE_INTEGER t1, LARGE_INTEGER t2) {
 
 
 static DWORD WINAPI present_thread(LPVOID arg) {
-    static uint32_t frame[4096 * 2160];
-    static uint32_t ovbuf[4096 * 2160];          /* the 2x HD overlay (host_frame_overlay) */
+    /* On the heap, not in the exe's image: two of these made it end above
+     * 0x77000000, where Windows puts the 32-bit ntdll.dll, and Windows then
+     * refused to start it ("The subsystem needed to support the image type is
+     * not present", #30). */
+    uint32_t* frame = (uint32_t*)malloc((size_t)4096 * 2160 * 4);
+    uint32_t* ovbuf = (uint32_t*)malloc((size_t)4096 * 2160 * 4);   /* the 2x HD overlay (host_frame_overlay) */
     int fullscreen = (int)(intptr_t)arg;
+    if (!frame || !ovbuf) return 0;
     timeBeginPeriod(1);              /* timeGetTime and Sleep(1) below in milliseconds */
     /* Per-monitor DPI aware, this thread only. Unaware, Windows stretched the
      * window's pixels by the display scale (2x at 200%) after our shader had

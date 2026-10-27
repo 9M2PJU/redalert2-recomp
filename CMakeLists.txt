@@ -118,7 +118,10 @@ target_include_directories(ra2 PRIVATE
 target_compile_definitions(ra2 PRIVATE RECOMP_RETADDR=0u _CRT_SECURE_NO_WARNINGS
                                     RECOMP_FLAT_MEMORY RECOMP_LOCAL_REGS)
 # Linked high and not relocatable, so the guest's 0x00400000..0x00B7A000 is
-# free.
+# free. The image has to end well below 0x77000000, where Windows maps the
+# 32-bit ntdll.dll (a different spot each boot): one that reached it would not
+# start at all ("The subsystem needed to support the image type is not
+# present", #30). So big buffers are malloc'd, not static arrays.
 target_link_options(ra2 PRIVATE /BASE:0x60000000 /FIXED:NO /DYNAMICBASE:NO
                                /NXCOMPAT /LARGEADDRESSAWARE /STACK:0x1000000
                                /MANIFESTUAC:NO)

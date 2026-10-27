@@ -703,12 +703,13 @@ static void record_close(void) {
  * a picture at 1352x845 on a Mac: the presenter kept the game at 40 frames a
  * second. The lock is now held for a memcpy, and the work runs on the copy.
  * One snapshot at a time (the presenter and the recorder share it). */
-static uint8_t g_snap[4096 * 2160 * 4];
+static uint8_t* g_snap;                       /* 4096x2160x4, made on first use */
 static CRITICAL_SECTION g_snap_lock;
 
 /* With g_snap_lock held: the primary into g_snap, rows of *pitch bytes. */
 static int snapshot(int* w, int* h, int* bpp, int* pitch) {
     DDSURFACEDESC d;
+    if (!g_snap && !(g_snap = (uint8_t*)malloc((size_t)4096 * 2160 * 4))) return 0;
     EnterCriticalSection(&g_primary_lock);
     if (!g_primary) { LeaveCriticalSection(&g_primary_lock); return 0; }
     memset(&d, 0, sizeof d);
@@ -807,9 +808,10 @@ int host_frame_overlay(uint32_t* base, uint32_t* ov, int maxw, int maxh, int* pw
  * new frame, at most one per 16 ms) and thrown away, so hdvox.c counts any
  * that showed the units at 1x (tools/playtest.py hd-scroll). */
 static DWORD WINAPI hd_probe(LPVOID unused) {
-    static uint32_t px[4096 * 2160];
+    uint32_t* px = (uint32_t*)malloc((size_t)4096 * 2160 * 4);
     long seen = -1;
     (void)unused;
+    if (!px) return 0;
     for (;;) {
         int w, h;
         Sleep(16);
@@ -824,8 +826,9 @@ static DWORD WINAPI hd_probe(LPVOID unused) {
 static const char* g_hd_frames_dir;
 
 static DWORD WINAPI hd_frame_dumper(LPVOID unused) {
-    static uint32_t px[4096 * 2160];
+    uint32_t* px = (uint32_t*)malloc((size_t)4096 * 2160 * 4);
     (void)unused;
+    if (!px) return 0;
     for (int n = 0; n < 60; ) {
         int w, h;
         Sleep(10000);
@@ -847,9 +850,11 @@ static DWORD WINAPI hd_frame_dumper(LPVOID unused) {
 }
 
 static DWORD WINAPI recorder(LPVOID unused) {
-    static uint32_t frame[4096 * 2160], row[4096];
+    static uint32_t row[4096];
+    uint32_t* frame = (uint32_t*)malloc((size_t)4096 * 2160 * 4);
     DWORD next = GetTickCount();
     (void)unused;
+    if (!frame) return 0;
     for (;;) {
         int w, h;
         next += 33;
